@@ -9,6 +9,9 @@ extern crate hyper;
 extern crate hyper_native_tls;
 extern crate tokio_core;
 
+#[cfg(test)]
+extern crate spectral;
+
 pub mod models;
 pub mod esi;
 
