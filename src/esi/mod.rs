@@ -115,12 +115,12 @@ pub mod systems {
     }
 }
 
+// It's really bad practice to make actual call to the remote API in tests
+// but I will skip using a mocking hyper client for now. Also there isn't
+// limit on the correct requests sent to the ESI, so I won't end up blocked.
 #[cfg(test)]
 mod test {
     use ::esi::systems;
-    // It's really bad practice to make actual call to the remote API in tests
-    // but I will skip using a mocking hyper client for now. Also there isn't
-    // limit on the correct requests sent to the ESI, so I won't end up blocked.
     #[test]
     fn fetch_all_ids_test(){
         let client = systems::build_client();
