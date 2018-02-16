@@ -36,7 +36,13 @@ pub mod systems {
     use ::models::System;
 
     /// Fetches the ids of all of the systems in the EVE universe.
-    /// Uses `client` as https client for the request
+    /// Uses `client` as https client for the request. Returns `Result`
+    /// containing a `Vec` of system ids. If a problem was encountered returns
+    /// a boxed `Error`
+    ///
+    /// Arguments:
+    ///
+    /// client: hyper::Client - HTTPS enabled hyper client
     pub fn fetch_all_ids(client: Client) -> Result<Vec<usize>, Box<Error>>  {
         let uri = "https://esi.tech.ccp.is/latest/universe/systems/";
         let mut body: Vec<u8> = vec![];
@@ -53,6 +59,13 @@ pub mod systems {
     }
 
     /// Fetches information for the system with the given `id` from ESI.
+    /// Returns `Result` containing a `models::System`. If a problem was
+    /// encountered returns a boxed `Error`
+    ///
+    /// Arguments:
+    ///
+    /// client: hyper::Client - HTTPS enabled hyper client
+    /// id: usize - Solar system id
     pub fn fetch_system_info(client: Client, id: usize) -> Result<System, Box<Error>> {
         let uri = format!("https://esi.tech.ccp.is/latest/universe/systems/{}/", id);
         let mut response = get_request(client, &uri)?;
@@ -69,15 +82,18 @@ pub mod systems {
         }
     }
 
-    /// Build a client to be used for a request
+    /// Builds a hyper client. Exists if unable to get OpenSSL or the equivalent
+    /// for the underlying operation system.
     pub fn build_client() -> Client {
         let ssl = grab_ssl();
         let connector = HttpsConnector::new(ssl);
         Client::with_connector(connector)
     }
 
-    /// Tries to use native tls client, like OpenSSL and gives a wrapper
-    /// around it.
+    /// Tries to use native tls client, like OpenSSL and returns object used
+    /// by hyper_native_tls. Exists if unable to get OpenSSL or the equivalent
+    /// for the running operation system.
+    // [TODO] Rename to TLS, since we actually don't use SSL.
     fn grab_ssl() -> NativeTlsClient {
         match NativeTlsClient::new() {
             Ok(ssl) => ssl,
@@ -118,5 +134,13 @@ mod test {
         let sys = systems::fetch_system_info(client, id).unwrap();
         assert_eq!(sys.name, "Amygnon");
         assert_eq!(sys.system_id, id)
+    }
+
+    #[test]
+    fn fetch_system_info_for_system_with_invalid_id() {
+        let client = systems::build_client();
+        let id = 0;
+        let sys = systems::fetch_system_info(client ,id);
+        assert!(sys.is_err());
     }
 }
