@@ -1,26 +1,43 @@
 use std::error::Error;
+
+/// Structure containing the `x`, `y` and `z` "coordinates" of the system
+/// in space
+#[derive(Debug, Deserialize)]
+pub struct Position {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64
+}
+
 /// Structure containing the information for a single solar system
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct System {
     pub system_id: usize,
-    pub name: String
+    pub name: String,
+    pub position: ::models::Position,
+    pub security_status: f32,
+    pub stargates: Vec<usize>
 }
 
 impl System {
-    /// Creates a new system from id and name
-    /// # Examples
+    /// Converts json array of system ids into a Result containing vector of
+    /// system ids. If the process of parsing the json wasn't succesfull returns
+    /// a boxed error.
     ///
-    /// ```
-    /// let system = System::new(30005311, "Amygnon")
-    /// ```
-    pub fn new(id: usize, name: String) -> Self {
-        System { system_id: id, name: name }
-    }
-
+    /// Arguments:
+    ///
+    /// ids_string: &[u8] - Reference to json array of Integers
     pub fn parse_ids(ids_string: &[u8]) -> Result<Vec<usize>, Box<Error>> {
         Ok(::serde_json::from_slice(ids_string)?)
     }
 
+    /// Converts json object containing information about a solar system into
+    /// `System` object. If the process of parsing the json wasn't successfull
+    /// returns a boxed error.
+    ///
+    /// Arguments:
+    ///
+    /// json: &[u8] - Reference to json object structured like the System struct
     pub fn parse(json: &[u8]) -> Result<System, Box<Error>> {
         Ok(::serde_json::from_slice(json)?)
     }
@@ -29,35 +46,7 @@ impl System {
 #[cfg(test)]
 mod test {
     use ::models::System;
-
-    #[test]
-    fn system_new_test(){
-        let system = System::new(0, String::from("Test"));
-        assert_eq!(system.system_id, 0);
-        assert_eq!(system.name, "Test");
-    }
-
-    #[test]
-    fn serialize_system_test() {
-        let system = System::new(0, String::from("Test"));
-        let result = ::serde_json::to_string(&system).unwrap();
-        let deser_system: System = ::serde_json::from_str(&result).unwrap();
-
-        assert_eq!(system.system_id, deser_system.system_id);
-        assert_eq!(system.name, deser_system.name);
-
-    }
-
-    #[test]
-    fn deserialize_system_test() {
-        let data = r#"{
-                        "name": "Test",
-                        "system_id": 0
-                      }"#;
-        let system: System = ::serde_json::from_str(data).unwrap();
-        assert_eq!(system.system_id, 0);
-        assert_eq!(system.name, "Test");
-    }
+    use spectral::prelude::*;
 
     #[test]
     fn parse_ids_test() {
@@ -87,6 +76,9 @@ mod test {
 
         assert_eq!(system.system_id, 30005311);
         assert_eq!(system.name, "Amygnon");
+        assert_that(&system.security_status).is_close_to(0.63, 0.01);
+        assert_that(&system.position.x).is_close_to(-2.43e+17, 0.01e+17);
+        assert_that(&system.stargates).has_length(1);
     }
 
     #[test]
