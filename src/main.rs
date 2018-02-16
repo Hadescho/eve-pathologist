@@ -4,8 +4,13 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate futures;
+extern crate hyper;
+extern crate hyper_native_tls;
+extern crate tokio_core;
+
 pub mod models;
-use ::models::System;
+pub mod esi;
 
 fn main() {
 }
